@@ -1,8 +1,10 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using AIRA.AI;
 using AIRA.Emotion;
 using AIRA.UI;
+using AIRA.Voice;
 
 public class LoadingGate : MonoBehaviour
 {
@@ -42,8 +44,23 @@ public class LoadingGate : MonoBehaviour
         if (_playButton != null) _playButton.interactable = false;
     }
 
-    // Start mulai timer timeout
-    private void Start() => StartCoroutine(TimeoutCoroutine());
+    // Bersih instance saat destroyed
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    // Bypass jika manager sudah siap dari scene sebelumnya
+    private void Start()
+    {
+        if (TTSManager.Instance  != null && TTSManager.Instance.IsWarmedUp)    _ttsReady     = true;
+        if (STTManager.Instance  != null && STTManager.Instance.IsInitialized) _sttReady     = true;
+        if (LLMManager.Instance  != null && LLMManager.Instance.IsReady)       _llmReady     = true;
+        if (_emotionClassifier   != null && _emotionClassifier.IsReady)        _emotionReady = true;
+
+        CheckAllReady();
+        if (!IsReady) StartCoroutine(TimeoutCoroutine());
+    }
 
     // LLM siap dipakai
     public void SetLLMReady()

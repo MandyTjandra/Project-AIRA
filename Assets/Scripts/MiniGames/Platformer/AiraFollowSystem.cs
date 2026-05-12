@@ -56,6 +56,10 @@ namespace AIRA.MiniGames.Platformer
         private bool    _playerFallFired;
         private bool    _airaFallFired;
 
+        [Header("Override Settings")]
+        [SerializeField] private float _arrivalRadius = 0.5f;
+        private Transform _overrideTarget;
+
         // Ambil komponen
         private void Awake()
         {
@@ -75,8 +79,7 @@ namespace AIRA.MiniGames.Platformer
         {
             if (_followMode != FollowMode.FollowPlayer) return;
             if (_player == null) return;
-            if (GameManager.Instance?.CurrentState != GameManager.GameState.MINIGAME_PLATFORMER)
-                return;
+            if (GameManager.Instance?.IsMinigameActive() != true) return;
 
             TrackPlayerIdle();
 
@@ -100,10 +103,12 @@ namespace AIRA.MiniGames.Platformer
             if (_followMode != FollowMode.FollowPlayer) return;
             if (_player == null) return;
             if (_isOnPlayerHead) return;
-            if (GameManager.Instance?.CurrentState != GameManager.GameState.MINIGAME_PLATFORMER)
-                return;
+            if (GameManager.Instance?.IsMinigameActive() != true) return;
 
-            MoveToFollow();
+            if (_overrideTarget != null)
+                MoveToOverrideTarget();
+            else
+                MoveToFollow();
         }
 
         // Pantau apakah player diam
@@ -234,6 +239,43 @@ namespace AIRA.MiniGames.Platformer
         private void MoveToPlayerHead()
         {
             _isOnPlayerHead = true;
+        }
+
+        // Override target sementara
+        public void OverrideTarget(Transform target)
+        {
+            _overrideTarget = target;
+        }
+
+        // Kembali ke follow player
+        public void ClearOverride()
+        {
+            _overrideTarget = null;
+        }
+
+        // Gerak menuju override target
+        private void MoveToOverrideTarget()
+        {
+            float dist = Vector2.Distance(transform.position, _overrideTarget.position);
+            if (dist <= _arrivalRadius)
+            {
+                _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
+                CoopPlateManager.NotifyAiraArrived(_overrideTarget);
+                return;
+            }
+
+            float dir = Mathf.Sign(_overrideTarget.position.x - transform.position.x);
+            if (!IsEdgeAhead(dir))
+            {
+                _rb.linearVelocity = new Vector2(dir * _moveSpeed, _rb.linearVelocity.y);
+                if (_visionSystem != null && _visionSystem.HasObstacleAhead &&
+                    Mathf.Sign(_visionSystem.NearestObstacleDirection) == dir)
+                    TryJump();
+            }
+            else
+                _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
+
+            FlipSprite(dir);
         }
 
         // Hentikan follow dari luar

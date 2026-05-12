@@ -36,16 +36,22 @@ namespace AIRA.MiniGames.Platformer
         // Baca input setiap frame
         private void Update()
         {
-            if (GameManager.Instance?.CurrentState != GameManager.GameState.MINIGAME_PLATFORMER)
-                return;
-
-            _horizontalInput = Keyboard.current.dKey.isPressed ? 1f :
-                               Keyboard.current.aKey.isPressed ? -1f : 0f;
+            bool playable = GameManager.Instance?.IsMinigameActive() == true;
 
             CheckGrounded();
 
-            if (Keyboard.current.spaceKey.wasPressedThisFrame && IsGrounded)
-                Jump();
+            if (playable)
+            {
+                _horizontalInput = Keyboard.current.dKey.isPressed ? 1f :
+                                   Keyboard.current.aKey.isPressed ? -1f : 0f;
+
+                if (Keyboard.current.spaceKey.wasPressedThisFrame && IsGrounded)
+                    Jump();
+            }
+            else
+            {
+                _horizontalInput = 0f;
+            }
 
             UpdateAnimator();
             FlipSprite();
@@ -54,9 +60,13 @@ namespace AIRA.MiniGames.Platformer
         // Terapkan movement physics
         private void FixedUpdate()
         {
-            if (GameManager.Instance?.CurrentState != GameManager.GameState.MINIGAME_PLATFORMER)
-                return;
+            if (GameManager.Instance?.IsMinigameActive() != true) return;
 
+            if (!PlatformerGame.Instance?.IsGameActive == true)
+            {
+                _rb.linearVelocity = Vector2.zero;
+                return;
+            }
             _rb.linearVelocity = new Vector2(_horizontalInput * _moveSpeed, _rb.linearVelocity.y);
         }
 

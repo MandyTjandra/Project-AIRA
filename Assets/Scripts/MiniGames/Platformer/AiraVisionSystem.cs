@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace AIRA.MiniGames.Platformer
@@ -36,6 +37,8 @@ namespace AIRA.MiniGames.Platformer
         public string EndDirection       { get; private set; }
         public bool   HasObstacleAhead          { get; private set; }
         public float  NearestObstacleDirection  { get; private set; }
+        public bool   CanSeePressurePlate       { get; private set; }
+        public bool   IsDoorBlocking            { get; private set; }
 
         private float _timer;
 
@@ -55,6 +58,8 @@ namespace AIRA.MiniGames.Platformer
             CanSeeEnd               = false;
             HasObstacleAhead        = false;
             NearestObstacleDirection = 0f;
+            CanSeePressurePlate     = false;
+            IsDoorBlocking          = false;
 
             if (_keyTransform != null && _keyTransform.gameObject.activeSelf)
             {
@@ -97,6 +102,15 @@ namespace AIRA.MiniGames.Platformer
                     }
                 }
             }
+
+            // Cek plate dan door via vision targets
+            CanSeePressurePlate = _visionTargets.Any(vt =>
+                vt.label == "PressurePlate" && vt.target != null &&
+                Vector2.Distance(transform.position, vt.target.position) <= _visionRadius);
+
+            IsDoorBlocking = _visionTargets.Any(vt =>
+                vt.isObstacle && vt.target != null &&
+                Vector2.Distance(transform.position, vt.target.position) <= _visionRadius);
         }
 
         // Terjemahkan posisi ke arah relatif
@@ -137,6 +151,9 @@ namespace AIRA.MiniGames.Platformer
                 string dir = GetRelativeDirection(vt.target.position);
                 parts.Append($"I can see a {vt.label} {dir}, {DescribeDistance(dist)}. ");
             }
+
+            if (IsDoorBlocking)
+                parts.Append("There's a door blocking my path. ");
 
             string result = parts.ToString().Trim();
             return result.Length > 0 ? result : "I can't see anything important from here.";

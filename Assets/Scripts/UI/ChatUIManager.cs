@@ -30,6 +30,9 @@ public class ChatUIManager : MonoBehaviour
     [SerializeField] private GameObject _userBubblePrefab;
     [SerializeField] private GameObject _aiBubblePrefab;
 
+    [Header("Minigame Buttons")]
+    [SerializeField] private GameObject[] _minigameButtons;
+
     // Private State
     private Coroutine _errorRecoveryCoroutine;
 
@@ -141,6 +144,30 @@ public class ChatUIManager : MonoBehaviour
         StartCoroutine(ScrollToBottomNextFrame());
     }
 
+    // Pecah response panjang jadi beberapa bubble
+    public void DisplayMessageChunked(string role, string content)
+    {
+        var sentences = content.Split(
+            new[] { ". ", "! ", "? " },
+            System.StringSplitOptions.RemoveEmptyEntries
+        );
+
+        string buffer = "";
+        foreach (string sentence in sentences)
+        {
+            buffer += (string.IsNullOrEmpty(buffer) ? "" : " ") + sentence.Trim();
+            int wordCount = buffer.Split(' ').Length;
+            if (wordCount >= 20)
+            {
+                if (!string.IsNullOrWhiteSpace(buffer))
+                    DisplayMessage(role, buffer);
+                buffer = "";
+            }
+        }
+        if (!string.IsNullOrWhiteSpace(buffer))
+            DisplayMessage(role, buffer);
+    }
+
     // UI State Helpers
     public void SetInputLocked(bool locked)
     {
@@ -152,6 +179,14 @@ public class ChatUIManager : MonoBehaviour
     {
         if (_cancelButton != null)
             _cancelButton.gameObject.SetActive(show);
+    }
+
+    // Tampilkan/sembunyikan tombol pilih minigame
+    private void SetMinigameButtonsVisible(bool visible)
+    {
+        if (_minigameButtons == null) return;
+        foreach (var btn in _minigameButtons)
+            if (btn != null) btn.SetActive(visible);
     }
 
     // State Machine Listener
@@ -169,6 +204,7 @@ public class ChatUIManager : MonoBehaviour
             case GameManager.GameState.LISTENING:
                 SetInputLocked(false);
                 ShowCancelButton(false);
+                SetMinigameButtonsVisible(true);
                 break;
 
             case GameManager.GameState.THINKING:
@@ -185,6 +221,7 @@ public class ChatUIManager : MonoBehaviour
             case GameManager.GameState.MINIGAME_PLAYING:
                 SetInputLocked(false);
                 ShowCancelButton(false);
+                SetMinigameButtonsVisible(false);
                 break;
 
             case GameManager.GameState.MINIGAME_RESULT:

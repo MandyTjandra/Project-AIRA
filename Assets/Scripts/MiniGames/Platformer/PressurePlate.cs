@@ -11,6 +11,10 @@ namespace AIRA.MiniGames.Platformer
         public UnityEvent OnPressed;
         public UnityEvent OnReleased;
 
+        // Status karakter di atas plate
+        public bool IsPlayerOn { get; private set; }
+        public bool IsAiraOn   { get; private set; }
+
         private SpriteRenderer _renderer;
         private int _occupantCount;
 
@@ -23,8 +27,10 @@ namespace AIRA.MiniGames.Platformer
         // deteksi objek masuk
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (!IsValid(other)) return;
+            if (other.CompareTag("Player"))        IsPlayerOn = true;
+            if (other.CompareTag("AiraCharacter")) IsAiraOn   = true;
 
+            if (!IsValid(other)) return;
             _occupantCount++;
             if (_occupantCount == 1)
             {
@@ -36,8 +42,10 @@ namespace AIRA.MiniGames.Platformer
         // deteksi objek keluar
         private void OnTriggerExit2D(Collider2D other)
         {
-            if (!IsValid(other)) return;
+            if (other.CompareTag("Player"))        IsPlayerOn = false;
+            if (other.CompareTag("AiraCharacter")) IsAiraOn   = false;
 
+            if (!IsValid(other)) return;
             _occupantCount = Mathf.Max(0, _occupantCount - 1);
             if (_occupantCount == 0)
             {

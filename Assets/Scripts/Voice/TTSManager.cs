@@ -49,7 +49,10 @@ namespace AIRA.Voice
         public static event Action<string> OnSpeakText;
 
         // Properti status TTS aktif
-        public bool IsSpeaking => _isSpeaking || _isProcessingQueue;
+        public bool IsSpeaking  => _isSpeaking || _isProcessingQueue;
+
+        // Flag warm-up selesai
+        public bool IsWarmedUp { get; private set; }
 
         // State internal
         private Coroutine _speakCoroutine;
@@ -112,6 +115,7 @@ namespace AIRA.Voice
             else
                 Debug.Log("[TTSManager] Warm-up selesai.");
 
+            IsWarmedUp = true;
             // TTS siap dipakai
             LoadingGate.Instance?.SetTTSReady();
         }
@@ -137,7 +141,7 @@ namespace AIRA.Voice
         // Hentikan saat state berubah
         private void HandleStateChanged(GameManager.GameState prev, GameManager.GameState next)
         {
-            if (next != GameManager.GameState.SPEAKING && _isSpeaking)
+            if (next != GameManager.GameState.SPEAKING && IsSpeaking)
                 StopSpeaking();
         }
 
@@ -160,9 +164,11 @@ namespace AIRA.Voice
             while (_speakQueue.Count > 0)
             {
                 var (text, expression) = _speakQueue.Dequeue();
+                string cleanText   = TextUtils.StripExpressionTags(text);
                 _currentExpression = expression;
+                AiraController.Instance?.SetExpression(expression);
                 _isSpeaking        = true;
-                yield return StartCoroutine(SpeakCoroutine(ChunkBySentence(text)));
+                yield return StartCoroutine(SpeakCoroutine(ChunkBySentence(cleanText)));
             }
 
             _suppressSpeakEndEvent = false;
@@ -172,7 +178,7 @@ namespace AIRA.Voice
             // Fire event setelah queue benar-benar kosong
             OnSpeakEnd?.Invoke();
             if (GameManager.Instance?.CurrentState == GameManager.GameState.SPEAKING)
-                GameManager.Instance.ChangeState(GameManager.GameState.IDLE);
+                GameManager.Instance.RestoreActiveState();
         }
 
         // Terima teks dan ekspresi aktif
@@ -185,7 +191,7 @@ namespace AIRA.Voice
 
             _currentExpression = expression;
 
-            string[] chunks = ChunkBySentence(text);
+            string[] chunks = ChunkBySentence(TextUtils.StripExpressionTags(text));
             _isSpeaking     = true;
             _speakCoroutine = StartCoroutine(SpeakCoroutine(chunks));
         }
@@ -411,6 +417,13 @@ namespace AIRA.Voice
             _lipSyncCoroutine = null;
         }
 
+        // Set volume AudioSource TTS
+        public void SetVolume(float volume)
+        {
+            if (_audioSource != null)
+                _audioSource.volume = volume;
+        }
+
         // Stop semua + bersihkan queue
         public void StopSpeaking()
         {
@@ -470,7 +483,7 @@ namespace AIRA.Voice
 
             OnSpeakEnd?.Invoke();
             if (GameManager.Instance?.CurrentState == GameManager.GameState.SPEAKING)
-                GameManager.Instance.ChangeState(GameManager.GameState.IDLE);
+                GameManager.Instance.RestoreActiveState();
         }
 
         // Buat path temp unik

@@ -25,6 +25,9 @@ namespace AIRA.AI
         [SerializeField] private LLMCharacter _extractionCharacter;
     #endif
 
+        // Properti ready LLM
+        public bool IsReady => _isReady;
+
         // Private State
         private CancellationTokenSource _cts;
         private bool _isReady;

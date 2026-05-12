@@ -252,7 +252,12 @@ namespace AIRA.AI
                 sb.AppendLine().Append($"- Tidak suka: {string.Join(", ", Facts.dislikes)}");
 
             if (hasMoments)
-                sb.AppendLine().Append($"- Momen bersama: {string.Join(", ", Facts.sharedMoments)}");
+            {
+                var recentMoments = Facts.sharedMoments.Count > 3
+                    ? Facts.sharedMoments.GetRange(Facts.sharedMoments.Count - 3, 3)
+                    : Facts.sharedMoments;
+                sb.AppendLine().Append($"- Momen bersama: {string.Join(", ", recentMoments)}");
+            }
 
             // Tambah instruksi penggunaan fakta
             sb.AppendLine().AppendLine()
@@ -307,6 +312,27 @@ namespace AIRA.AI
             }
         }
 
+        // Hapus semua memory session
+        public void ClearAllMemory()
+        {
+            activeHistory     = new List<Message>();
+            sessionSummary    = "";
+            Facts             = new LongTermFacts();
+            _sessionSummaries = new List<SessionSummaryEntry>();
+
+            try
+            {
+                if (File.Exists(SavePath))         File.Delete(SavePath);
+                if (File.Exists(_sessionSavePath)) File.Delete(_sessionSavePath);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[MemoryManager] Gagal hapus file memory: {e.Message}");
+            }
+
+            Debug.Log("[MemoryManager] All memory cleared.");
+        }
+
         // Private Helpers
         private int GetTotalTokens()
         {
@@ -321,11 +347,18 @@ namespace AIRA.AI
             var oldest = activeHistory.GetRange(0, half);
             activeHistory.RemoveRange(0, half);
 
-            var sb = new StringBuilder("Ringkasan percakapan sebelumnya: ");
+            var sb = new StringBuilder();
             foreach (var m in oldest)
                 sb.Append($"[{m.role}] {m.content} ");
 
-            sessionSummary = sb.ToString().Trim();
+            string newChunk = sb.ToString().Trim();
+            sessionSummary = string.IsNullOrEmpty(sessionSummary)
+                ? newChunk
+                : sessionSummary + " | " + newChunk;
+
+            if (sessionSummary.Length > 500)
+                sessionSummary = sessionSummary.Substring(sessionSummary.Length - 500);
+
             Debug.Log($"[MemoryManager] {half} messages collapsed into summary.");
         }
     }

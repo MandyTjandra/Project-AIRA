@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace AIRA.MiniGames.SpaceShooter{
 
+// Enum pemilik peluru
+public enum BulletOwner { Player, Companion }
+
 public class Bullet : MonoBehaviour
 {
     [SerializeField]
@@ -15,6 +18,12 @@ public class Bullet : MonoBehaviour
     private GameObject m_hitVFXPrefab; // Masukkan prefab efek ledakan kecil di sini
 
     private float m_currentLifetime;
+
+    // Pemilik peluru ini
+    public BulletOwner Owner { get; private set; }
+
+    // Set pemilik peluru
+    public void SetOwner(BulletOwner owner) => Owner = owner;
 
     void Update()
     {

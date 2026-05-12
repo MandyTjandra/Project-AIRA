@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using AIRA.Character;
+using AIRA.Core;
 using AIRA.Voice;
 using AIRA.AI;
 
@@ -144,6 +145,28 @@ namespace AIRA.MiniGames.Platformer
                 "aira_fell_gap" =>
                     "Aira just fell into a gap while following the player! React in first person, surprised or embarrassed. Keep it short, 1-2 sentences. " +
                     "Start with ONE expression tag: [SURPRISED] or [SHY]",
+                "aira_going_to_plate" =>
+                    "You are walking to the pressure plate so the player can pass through the door. " +
+                    "Tell the player in 1-2 sentences to go through the door first while you hold the plate. " +
+                    "Start with ONE expression tag: [HAPPY] or [THINKING]",
+                "aira_holding_plate" =>
+                    "You are standing on the pressure plate and holding it down. " +
+                    "Excitedly tell the player to go to the endpoint now. 1 short sentence. " +
+                    "Start with ONE expression tag: [HAPPY]",
+                "coop_success" =>
+                    "You both just completed the cooperative section together! Celebrate the teamwork in 1 sentence. " +
+                    "Start with ONE expression tag: [HAPPY]",
+                "aira_frustrated_ignored" =>
+                    "The player walked right past the pressure plate without stopping. " +
+                    "React with slight passive-aggressive frustration, but keep it cute and short. " +
+                    "Start with ONE expression tag: [SAD] or [SURPRISED]",
+                "aira_frustrated_abandoned" =>
+                    "The player has left the pressure plate area multiple times now. " +
+                    "React more emotionally — more frustrated than before. 1-2 sentences. " +
+                    "Start with ONE expression tag: [SAD]",
+                "aira_hint_comeback" =>
+                    "Gently hint to the player to come back to the pressure plate. Not angry, just a soft reminder. 1 sentence. " +
+                    "Start with ONE expression tag: [THINKING]",
                 _ =>
                     "Respond naturally in 1-2 sentences. " +
                     "Don't repeat what you already commented about. " +
@@ -171,6 +194,24 @@ namespace AIRA.MiniGames.Platformer
 
         // Dipanggil saat stacking terjadi
         public void OnStacking()        => TriggerComment("stacking", true);
+
+        // Aira mulai jalan ke plate
+        public void OnAiraGoingToPlate()        => TriggerComment("aira_going_to_plate");
+
+        // Aira sudah tahan plate
+        public void OnAiraHoldingPlate()        => TriggerComment("aira_holding_plate");
+
+        // Kerja sama coop berhasil
+        public void OnCoopSuccess()             => TriggerComment("coop_success", true);
+
+        // Aira frustrasi diabaikan player
+        public void OnAiraFrustratedIgnored()   => TriggerComment("aira_frustrated_ignored", true);
+
+        // Aira frustrasi ditinggal berkali-kali
+        public void OnAiraFrustratedAbandoned() => TriggerComment("aira_frustrated_abandoned", true);
+
+        // Hint halus balik ke plate
+        public void OnAiraHintComeback()        => TriggerComment("aira_hint_comeback");
 
         // Terima input player via STT
         public void OnPlayerSpeech(string input)

@@ -27,6 +27,9 @@ public class AsteroidController : BoundedEntity
     [Header("VFX Settings")]
     [SerializeField] private GameObject m_explosionVFXPrefab;
 
+    // Penembak terakhir asteroid ini
+    private BulletOwner m_lastShooter = BulletOwner.Player;
+
     private void Start()
     {
         if (m_rigidbody == null) m_rigidbody = GetComponent<Rigidbody2D>();
@@ -59,6 +62,9 @@ public class AsteroidController : BoundedEntity
 
         if (collision.gameObject.CompareTag("Bullet"))
         {
+            // Catat pemilik peluru sebelum destroy
+            Bullet b = collision.gameObject.GetComponent<Bullet>();
+            if (b != null) m_lastShooter = b.Owner;
             Destroy(collision.gameObject);
             TakeDamage(1f); // Menghancurkan asteroid sesuai health sistem
         }
@@ -131,13 +137,18 @@ public class AsteroidController : BoundedEntity
                 }
             }
         }
+        if (GameEvents.Instance != null) GameEvents.Instance.AsteroidDestroyed(transform.position);
+        GameEvents.Instance?.AsteroidDestroyedByShooter(transform.position, m_lastShooter);
         base.OnDie();
     }
 
     private void TryDropItem()
     {
         if (m_collectiblePrefab != null && Random.Range(0f, 100f) <= m_dropChance)
+        {
             Instantiate(m_collectiblePrefab, transform.position, Quaternion.identity);
+            if (GameEvents.Instance != null) GameEvents.Instance.CollectibleSpawned(transform.position);
+        }
     }
 
     public bool IsBigAsteroid() => m_isBigAsteroid;

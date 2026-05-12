@@ -1,16 +1,20 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using AIRA.Voice;
 
-public class MicToggleButton : MonoBehaviour
+public class MicToggleButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] private Image _buttonImage;
 
-    [Header("Warna Tombol")]
-    [SerializeField] private Color _colorOn  = new Color(0.2f, 0.8f, 0.2f, 1f);
-    [SerializeField] private Color _colorOff = new Color(0.8f, 0.2f, 0.2f, 1f);
+    [Header("Sprite State")]
+    [SerializeField] private Sprite _spriteOffDefault;
+    [SerializeField] private Sprite _spriteOffHover;
+    [SerializeField] private Sprite _spriteOnDefault;
+    [SerializeField] private Sprite _spriteOnHover;
 
-    private bool _isActive = false;
+    private bool _isActive  = false;
+    private bool _isHovering = false;
 
     // Subscribe event STTManager
     private void OnEnable()
@@ -28,7 +32,7 @@ public class MicToggleButton : MonoBehaviour
     public void OnClick()
     {
         _isActive = !_isActive;
-        UpdateColor();
+        UpdateVisual();
 
         if (_isActive)
             STTManager.Instance?.StartListening();
@@ -36,17 +40,34 @@ public class MicToggleButton : MonoBehaviour
             STTManager.Instance?.StopListening();
     }
 
-    // Sync warna dari luar
+    // Sync state dari luar
     public void SetActive(bool active)
     {
         _isActive = active;
-        UpdateColor();
+        UpdateVisual();
     }
 
-    // Terapkan warna ke image
-    private void UpdateColor()
+    // Deteksi hover masuk
+    public void OnPointerEnter(PointerEventData eventData)
     {
-        if (_buttonImage != null)
-            _buttonImage.color = _isActive ? _colorOn : _colorOff;
+        _isHovering = true;
+        UpdateVisual();
+    }
+
+    // Deteksi hover keluar
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        _isHovering = false;
+        UpdateVisual();
+    }
+
+    // Terapkan sprite sesuai state
+    private void UpdateVisual()
+    {
+        if (_buttonImage == null) return;
+
+        _buttonImage.sprite = _isActive
+            ? (_isHovering ? _spriteOnHover  : _spriteOnDefault)
+            : (_isHovering ? _spriteOffHover : _spriteOffDefault);
     }
 }

@@ -137,7 +137,7 @@ Rigidbody2D:
   m_Mass: 1
   m_LinearDamping: 0
   m_AngularDamping: 0.05
-  m_GravityScale: 3
+  m_GravityScale: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -291,6 +291,12 @@ MonoBehaviour:
   _groundLayer:
     serializedVersion: 2
     m_Bits: 256
+  _maxFollowYDiff: 3
+  _edgeRayDistance: 1
+  _edgeRayOffset: 0.4
+  _stepUpThreshold: 0.5
+  _stepUpForce: 2
+  _fallThresholdY: -10
   _followMode: 0
 --- !u!114 &8606494031591529911
 MonoBehaviour:
@@ -307,6 +313,7 @@ MonoBehaviour:
   _vision: {fileID: 1445997521057887919}
   _follow: {fileID: 4069861778270737258}
   _commentCooldown: 10
+  _fallCommentCooldown: 5
 --- !u!1 &7309902802934385989
 GameObject:
   m_ObjectHideFlags: 0

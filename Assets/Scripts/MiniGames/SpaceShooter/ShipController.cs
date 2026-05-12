@@ -58,6 +58,8 @@ public class ShipController : BoundedEntity
     private bool m_isBoosterPlaying = false;
 
     public bool IsSafe() => m_isInvincible || m_isDead;
+    // Getter status mati
+    public bool IsDead() => m_isDead;
 
     protected override void Awake()
     {
@@ -172,6 +174,7 @@ public class ShipController : BoundedEntity
 
             GameObject bullet = Instantiate(m_bulletPrefab, transform.position + (transform.up * m_bulletSpawnOffset), Quaternion.identity);
             bullet.transform.up = transform.up;
+            bullet.GetComponent<Bullet>()?.SetOwner(BulletOwner.Player);
             Physics2D.IgnoreCollision(bullet.GetComponent<Collider2D>(), m_collider);
         }
     }
@@ -228,6 +231,7 @@ public class ShipController : BoundedEntity
         }
         m_spriteRenderer.enabled = true;
         m_collider.enabled = true;
+        GameEvents.Instance.PlayerRespawnEnd();
         m_isInvincible = false;
     }
 
@@ -244,28 +248,12 @@ public class ShipController : BoundedEntity
     {
         if (IsSafe()) return;
 
-        if (m_scoreManager != null)
-        {
-            float currentHealth = m_scoreManager.GetCurrentHealth();
-            Debug.Log($"[SHIP] Kena Hit. Darah: {currentHealth}, Damage: {amount}");
+        // Cek health sebelum damage
+        float currentHealth = HealthManager.Instance != null ? HealthManager.Instance.GetCurrentHealth() : 0f;
+        Debug.Log($"[SHIP] Kena Hit. Darah: {currentHealth}, Damage: {amount}");
 
-            if (currentHealth > amount)
-            {
-                if (m_hitSoundHandler != null)
-                {
-                    Debug.Log("[SHIP] Memutar Suara HIT");
-                    m_hitSoundHandler.Play();
-                }
-                else
-                {
-                    Debug.LogError("[SHIP] Slot Hit Sound Handler KOSONG!");
-                }
-            }
-        }
-        else
-        {
-            Debug.LogError("[SHIP] Score Manager belum dimasukkan ke Inspector!");
-        }
+        if (currentHealth > amount && m_hitSoundHandler != null)
+            m_hitSoundHandler.Play();
 
         if (GameEvents.Instance != null)
             GameEvents.Instance.PlayerDamage(amount);

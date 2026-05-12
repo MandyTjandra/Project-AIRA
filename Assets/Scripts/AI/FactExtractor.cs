@@ -5,7 +5,6 @@ using UnityEngine;
 
 namespace AIRA.AI
 {
-    // Regular C# class, bukan MonoBehaviour
     public class FactExtractor
     {
         [Serializable]

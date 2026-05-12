@@ -55,7 +55,11 @@ public class HeadsUpGame : MiniGameBase
     }
 
     // Entry point dari Play Button
-    public override void StartGame() => _introFlow.Start();
+    public override void StartGame()
+    {
+        GameManager.Instance?.RegisterMiniGame(this);
+        _introFlow.Start();
+    }
 
     // Entry point dari GameManager
     public override void ProcessUserResponse(string input)
@@ -67,7 +71,11 @@ public class HeadsUpGame : MiniGameBase
     }
 
     // Selesai game
-    public override void EndGame() => OnGameEnd();
+    public override void EndGame()
+    {
+        GameManager.Instance?.UnregisterMiniGame();
+        OnGameEnd();
+    }
 
     // Apakah game sedang berjalan
     public override bool IsGameActive => _introFlow.IsActive || _playFlow.IsActive;
