@@ -30,13 +30,16 @@ namespace AIRA.UI
         [Header("Lainnya")]
         [SerializeField] private TMP_Dropdown _micDropdown;
         [SerializeField] private Button _clearMemoryBtn;
-        [SerializeField] private Button _closeBtn;
+        [SerializeField] protected Button _closeBtn;
+
+        [Header("Audio")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip   _closeSound;
 
         private bool _isLoading;
         private Coroutine _populateCoroutine;
 
-        // Aktifkan dan load settings
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
             LoadCurrentSettings();
             RegisterSemuaCallback();
@@ -47,8 +50,7 @@ namespace AIRA.UI
                 _populateCoroutine = StartCoroutine(WaitAndPopulateDropdown());
         }
 
-        // Hentikan coroutine dan unregister
-        private void OnDisable()
+        protected virtual void OnDisable()
         {
             if (_populateCoroutine != null)
             {
@@ -58,7 +60,6 @@ namespace AIRA.UI
             UnregisterSemuaCallback();
         }
 
-        // Muat nilai settings ke UI
         private void LoadCurrentSettings()
         {
             _isLoading = true;
@@ -68,15 +69,10 @@ namespace AIRA.UI
             float sfx    = AIRASettings.Instance.SFXVolume    * 100f;
             float tts    = AIRASettings.Instance.TTSVolume    * 100f;
 
-            Debug.Log($"[SettingsController] Master raw: {AIRASettings.Instance.MasterVolume}, UI: {master}");
-            Debug.Log($"[SettingsController] Slider maxValue: {_masterSlider.maxValue}");
-
-            _masterSlider.value   = master;
-            _musicSlider.value    = music;
-            _sfxSlider.value      = sfx;
-            _ttsVoiceSlider.value = tts;
-
-            Debug.Log($"[SettingsController] Slider value after set: {_masterSlider.value}, label akan: {Mathf.RoundToInt(master)}");
+            _masterSlider.SetValueWithoutNotify(master);
+            _musicSlider.SetValueWithoutNotify(music);
+            _sfxSlider.SetValueWithoutNotify(sfx);
+            _ttsVoiceSlider.SetValueWithoutNotify(tts);
 
             _masterValue.text   = Mathf.RoundToInt(master).ToString();
             _musicValue.text    = Mathf.RoundToInt(music).ToString();
@@ -90,7 +86,6 @@ namespace AIRA.UI
             _isLoading = false;
         }
 
-        // Isi pilihan mikrofon dari STT
         private void PopulateDropdown()
         {
             string[] devices = STTManager.Instance?.GetAvailableDevices() ?? new string[0];
@@ -99,10 +94,11 @@ namespace AIRA.UI
 
             _micDropdown.ClearOptions();
             _micDropdown.AddOptions(list);
-            _micDropdown.value = Mathf.Clamp(AIRASettings.Instance.MicrophoneDeviceIndex, 0, list.Count - 1);
+            
+            int targetIndex = Mathf.Clamp(AIRASettings.Instance.MicrophoneDeviceIndex, 0, list.Count - 1);
+            _micDropdown.SetValueWithoutNotify(targetIndex);
         }
 
-        // Tunggu STT siap lalu populate
         private IEnumerator WaitAndPopulateDropdown()
         {
             yield return new WaitUntil(() => STTManager.Instance != null && STTManager.Instance.IsInitialized);
@@ -110,7 +106,6 @@ namespace AIRA.UI
             _populateCoroutine = null;
         }
 
-        // Daftarkan semua callback UI
         private void RegisterSemuaCallback()
         {
             _masterSlider.onValueChanged.AddListener(OnMasterChanged);
@@ -125,7 +120,6 @@ namespace AIRA.UI
             _emotionToggle.OnValueChanged += OnEmotionChanged;
         }
 
-        // Lepas semua callback UI
         private void UnregisterSemuaCallback()
         {
             _masterSlider.onValueChanged.RemoveListener(OnMasterChanged);
@@ -140,7 +134,6 @@ namespace AIRA.UI
             _emotionToggle.OnValueChanged -= OnEmotionChanged;
         }
 
-        // Perubahan master volume
         private void OnMasterChanged(float value)
         {
             if (_isLoading) return;
@@ -148,7 +141,6 @@ namespace AIRA.UI
             AIRASettings.Instance?.SetMasterVolume(value / 100f);
         }
 
-        // Perubahan music volume
         private void OnMusicChanged(float value)
         {
             if (_isLoading) return;
@@ -156,7 +148,6 @@ namespace AIRA.UI
             AIRASettings.Instance?.SetMusicVolume(value / 100f);
         }
 
-        // Perubahan SFX volume
         private void OnSFXChanged(float value)
         {
             if (_isLoading) return;
@@ -164,7 +155,6 @@ namespace AIRA.UI
             AIRASettings.Instance?.SetSFXVolume(value / 100f);
         }
 
-        // Perubahan TTS voice volume
         private void OnTTSVoiceChanged(float value)
         {
             if (_isLoading) return;
@@ -172,43 +162,49 @@ namespace AIRA.UI
             AIRASettings.Instance?.SetTTSVolume(value / 100f);
         }
 
-        // Perubahan toggle STT
         private void OnSTTChanged(bool value)
         {
             if (_isLoading) return;
             AIRASettings.Instance?.SetSTTEnabled(value);
         }
 
-        // Perubahan toggle TTS
         private void OnTTSChanged(bool value)
         {
             if (_isLoading) return;
             AIRASettings.Instance?.SetTTSEnabled(value);
         }
 
-        // Perubahan toggle emotion classifier
         private void OnEmotionChanged(bool value)
         {
             if (_isLoading) return;
             AIRASettings.Instance?.SetEmotionClassifier(value);
         }
 
-        // Perubahan pilihan microphone
         private void OnMicrophoneChanged(int index)
         {
             if (_isLoading) return;
             AIRASettings.Instance?.SetMicrophoneDevice(index);
         }
 
-        // Hapus semua memory session
         private void OnClearMemory()
         {
             AIRASettings.Instance?.ClearMemory();
         }
 
-        // Tutup panel settings
-        private void OnClose()
+        // Mulai coroutine tutup
+        protected virtual void OnClose()
         {
+            StartCoroutine(CloseWithSound());
+        }
+
+        // Tunggu audio selesai tutup
+        private IEnumerator CloseWithSound()
+        {
+            if (_audioSource != null && _audioSource.gameObject.activeInHierarchy && _audioSource.enabled)
+            {
+                _audioSource.PlayOneShot(_closeSound);
+                yield return new WaitUntil(() => !_audioSource.isPlaying);
+            }
             gameObject.SetActive(false);
         }
     }

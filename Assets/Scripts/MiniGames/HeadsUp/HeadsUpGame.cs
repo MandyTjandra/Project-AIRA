@@ -87,7 +87,10 @@ public class HeadsUpGame : MiniGameBase
     // Dipanggil PlayFlow saat game selesai
     public void OnGameEnd()
     {
-        _ui?.ShowGamePanel(false); 
+        TTSManager.Instance?.StopSpeaking();
+        STTManager.Instance?.StopListening();
+        _ui?.ShowGamePanel(false);
+        Time.timeScale = 1f;
         GameManager.Instance?.ChangeState(GameManager.GameState.IDLE);
     }
 

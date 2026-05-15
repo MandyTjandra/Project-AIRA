@@ -118,7 +118,7 @@ namespace AIRA.MiniGames.Platformer
         // Muat level atau akhiri platformer
         public void LoadNextLevelOrEnd(string currentSceneName)
         {
-            string[] levels = { "Platformer_Level01", "Platformer_Level02", "Platformer_Level03" };
+            string[] levels = { "Platformer_Level01", "Platformer_Level02" };
             int index = System.Array.IndexOf(levels, currentSceneName);
             if (index >= 0 && index < levels.Length - 1)
                 SceneManager.LoadScene(levels[index + 1]);
@@ -165,15 +165,27 @@ namespace AIRA.MiniGames.Platformer
             _isActive     = false;
             _isCompleting = true;
 
-            // Cegah STT dan LLM mengganggu sequence ending
             STTManager.Instance?.StopListening();
             LLMManager.Instance?.CancelCurrent();
 
-            AiraSpeak("We did it! Level complete!", "HAPPY");
-            yield return null; // beri ProcessSpeakQueue waktu start
-            yield return new WaitUntil(() => TTSManager.Instance == null || !TTSManager.Instance.IsSpeaking);
-            yield return new WaitForSeconds(1f);
-            EndGame();
+            // Tentukan next level untuk konteks komentar
+            int nextLevel = GetNextLevelIndex();
+            PlatformerCommentator.Instance?.OnLevelTransition(nextLevel);
+
+            yield return new WaitUntil(() =>
+                TTSManager.Instance == null || !TTSManager.Instance.IsSpeaking);
+            yield return new WaitForSeconds(0.5f);
+
+            LoadNextLevelOrEnd(SceneManager.GetActiveScene().name);
+        }
+
+        // Hitung index level berikutnya
+        private int GetNextLevelIndex()
+        {
+            string[] levels  = { "Platformer_Level01", "Platformer_Level02" };
+            string   current = SceneManager.GetActiveScene().name;
+            int      index   = System.Array.IndexOf(levels, current);
+            return index >= 0 ? index + 2 : levels.Length + 1;
         }
 
         // Update teks bubble dan jalankan TTS

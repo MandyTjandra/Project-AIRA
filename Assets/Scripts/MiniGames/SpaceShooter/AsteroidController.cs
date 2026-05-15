@@ -74,12 +74,6 @@ public class AsteroidController : BoundedEntity
         }
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        if (collision.gameObject.CompareTag("Player"))
-            CheckAndDamagePlayer(collision.gameObject);
-    }
-
     private void CheckAndDamagePlayer(GameObject playerObj)
     {
         ShipController ship = playerObj.GetComponent<ShipController>();
@@ -119,20 +113,30 @@ public class AsteroidController : BoundedEntity
         // Logika Splitting (Pecah)
         if (m_smallerAsteroidPrefabs != null && m_smallerAsteroidPrefabs.Count > 0)
         {
+            // Offset random agar spread tidak simetris kaku
+            float baseAngle = Random.Range(0f, 360f);
             for (int i = 0; i < m_splitCount; i++)
             {
-                Vector2 spreadDir = new Vector2(Mathf.Cos((360f / m_splitCount) * i * Mathf.Deg2Rad), Mathf.Sin((360f / m_splitCount) * i * Mathf.Deg2Rad));
+                float angle     = baseAngle + (360f / m_splitCount) * i;
+                Vector2 spreadDir = new Vector2(
+                    Mathf.Cos(angle * Mathf.Deg2Rad),
+                    Mathf.Sin(angle * Mathf.Deg2Rad)
+                );
 
-                GameObject piece = Instantiate(m_smallerAsteroidPrefabs[Random.Range(0, m_smallerAsteroidPrefabs.Count)], transform.position + (Vector3)(spreadDir * 1.2f), Quaternion.Euler(0, 0, Random.Range(0, 360)));
+                Vector3 spawnOffset = (Vector3)(spreadDir * 1.5f);
+                GameObject piece = Instantiate(
+                    m_smallerAsteroidPrefabs[Random.Range(0, m_smallerAsteroidPrefabs.Count)],
+                    transform.position + spawnOffset,
+                    Quaternion.Euler(0, 0, Random.Range(0, 360))
+                );
 
                 AsteroidController script = piece.GetComponent<AsteroidController>();
-                if (script != null) script.SetBounds(m_bounds); // Sinkronisasi Bounds
+                if (script != null) script.SetBounds(m_bounds);
 
                 Rigidbody2D rbPiece = piece.GetComponent<Rigidbody2D>();
                 if (rbPiece != null)
                 {
-                    // Berikan gaya menyebar berdasarkan m_forcePower prefab kecil tersebut
-                    float pieceSpeed = script != null ? script.m_forcePower : 7f;
+                    float pieceSpeed = script != null ? script.m_forcePower : 4f;
                     rbPiece.linearVelocity = spreadDir * pieceSpeed;
                 }
             }
@@ -152,5 +156,11 @@ public class AsteroidController : BoundedEntity
     }
 
     public bool IsBigAsteroid() => m_isBigAsteroid;
+
+    // Set kecepatan dari luar
+    public void SetSpeed(float speed)
+    {
+        m_forcePower = speed;
+    }
 }
 }

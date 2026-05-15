@@ -32,6 +32,12 @@ namespace AIRA.UI
         [Header("Scene")]
         [SerializeField] private string _mainSceneName = "MainScene";
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip   _resumeSound;
+        [SerializeField] private AudioClip   _restartSound;
+        [SerializeField] private AudioClip   _exitSound;
+
         private bool      _isPaused;
         private Coroutine _blurCoroutine;
 
@@ -95,14 +101,17 @@ namespace AIRA.UI
         // Tombol resume ditekan
         public void OnResumeClicked()
         {
-            ClosePause();
+            StartCoroutine(PlaySoundThen(_resumeSound, () => ClosePause()));
         }
 
         // Restart level in-place
         public void OnRestartClicked()
         {
-            ClosePause();
-            PlatformerGame.Instance?.StartGame();
+            StartCoroutine(PlaySoundThen(_restartSound, () =>
+            {
+                ClosePause();
+                PlatformerGame.Instance?.StartGame();
+            }));
         }
 
         // Toggle panel settings
@@ -115,9 +124,23 @@ namespace AIRA.UI
         // Kembali ke Aira Room
         public void OnAiraRoomClicked()
         {
-            Time.timeScale = 1f;
-            TTSManager.Instance?.StopSpeaking();
-            SceneManager.LoadScene(_mainSceneName);
+            StartCoroutine(PlaySoundThen(_exitSound, () =>
+            {
+                GameManager.Instance?.EndPlatformer();
+            }));
+        }
+
+        // Mainkan audio lalu jalankan action
+        private IEnumerator PlaySoundThen(AudioClip clip, System.Action action)
+        {
+            if (clip != null && _audioSource != null
+                && _audioSource.gameObject.activeInHierarchy
+                && _audioSource.enabled)
+            {
+                _audioSource.PlayOneShot(clip);
+                yield return new WaitForSecondsRealtime(clip.length);
+            }
+            action?.Invoke();
         }
 
         // Ambil nomor level dari scene
@@ -139,8 +162,7 @@ namespace AIRA.UI
             return level switch
             {
                 1 => "We're almost at the checkpoint! Keep your spirits up!",
-                2 => "Level 2 already! You're getting the hang of this.",
-                3 => "Final level! Let's finish this together!",
+                2 => "Final level! Let's finish this together!",
                 _ => "Take a breather. I'll be right here!"
             };
         }

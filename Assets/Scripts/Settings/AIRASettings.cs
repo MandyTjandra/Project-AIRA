@@ -16,10 +16,10 @@ namespace AIRA.Core
         [SerializeField] private AudioMixer _audioMixer;
 
         [Header("Volume")]
-        [SerializeField] [Range(0f, 1f)] private float _masterVolume = 1f;
-        [SerializeField] [Range(0f, 1f)] private float _musicVolume  = 1f;
-        [SerializeField] [Range(0f, 1f)] private float _sfxVolume    = 1f;
-        [SerializeField] [Range(0f, 1f)] private float _ttsVolume    = 1f;
+        [SerializeField] [Range(0f, 1f)] private float _masterVolume = 0.5f;
+        [SerializeField] [Range(0f, 1f)] private float _musicVolume  = 0.5f;
+        [SerializeField] [Range(0f, 1f)] private float _sfxVolume    = 0.5f;
+        [SerializeField] [Range(0f, 1f)] private float _ttsVolume    = 0.5f;
 
         [Header("Device")]
         [SerializeField] private int _microphoneDeviceIndex = 0;
@@ -96,10 +96,10 @@ namespace AIRA.Core
             string path = Path.Combine(Application.persistentDataPath, "aira_settings.json");
             if (File.Exists(path)) File.Delete(path);
 
-            _masterVolume          = 1f;
-            _musicVolume           = 1f;
-            _sfxVolume             = 1f;
-            _ttsVolume             = 1f;
+            _masterVolume          = 0.5f;
+            _musicVolume           = 0.5f;
+            _sfxVolume             = 0.5f;
+            _ttsVolume             = 0.5f;
             _microphoneDeviceIndex = 0;
             _sttEnabled            = true;
             _ttsEnabled            = true;
@@ -190,10 +190,10 @@ namespace AIRA.Core
         [Serializable]
         private class SettingsData
         {
-            public float masterVolume          = 1f;
-            public float musicVolume           = 1f;
-            public float sfxVolume             = 1f;
-            public float ttsVolume             = 1f;
+            public float masterVolume          = 0.5f;
+            public float musicVolume           = 0.5f;
+            public float sfxVolume             = 0.5f;
+            public float ttsVolume             = 0.5f;
             public int   microphoneDeviceIndex = 0;
             public bool  sttEnabled            = true;
             public bool  ttsEnabled            = true;

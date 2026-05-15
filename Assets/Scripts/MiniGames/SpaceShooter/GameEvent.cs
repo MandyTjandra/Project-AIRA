@@ -58,7 +58,6 @@ public class GameEvents
     public void AsteroidDestroyedByShooter(Vector3 pos, BulletOwner shooter)
         => onAsteroidDestroyedByShooter?.Invoke(pos, shooter);
 
-    // --- Retry & Reset Events (PENTING) ---
     // Event ini akan didengarkan oleh Manager untuk mereset state game
     public event Action onRetry;
 

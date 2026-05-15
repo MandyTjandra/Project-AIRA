@@ -7,7 +7,6 @@ using AIRA.Voice;
 
 namespace AIRA.UI
 {
-    // Manager utama main menu
     public class MainMenuManager : MonoBehaviour
     {
         [Header("Panel")]
@@ -19,19 +18,20 @@ namespace AIRA.UI
         [SerializeField] private string _returningGreeting = "Welcome back! It's good to see you again.";
         [SerializeField] private float  _greetingDelay     = 0.5f;
 
-        // Inisialisasi panel default state
+        [Header("Audio")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip   _closeSound;
+
         private void Awake()
         {
-            _creditsPanel?.SetActive(false);
+            if (_creditsPanel != null) _creditsPanel.SetActive(false);
         }
 
-        // Mulai sequence greeting
         private void Start()
         {
             StartCoroutine(GreetingSequence());
         }
 
-        // Tunggu loading lalu greet
         private IEnumerator GreetingSequence()
         {
             yield return new WaitUntil(() =>
@@ -42,7 +42,6 @@ namespace AIRA.UI
             TriggerGreeting();
         }
 
-        // Pilih dan ucapkan greeting
         private void TriggerGreeting()
         {
             if (TTSManager.Instance == null) return;
@@ -54,40 +53,70 @@ namespace AIRA.UI
             TTSManager.Instance.Speak(text, "HAPPY");
         }
 
-        // Klik tombol Play
         public void OnClickPlay()
         {
-            TTSManager.Instance?.StopSpeaking();
-            SceneManager.LoadScene("MainScene");
+            StartCoroutine(PlayRoutine());
         }
 
-        // Toggle panel settings
+        private IEnumerator PlayRoutine()
+        {
+            if (TTSManager.Instance != null) TTSManager.Instance.StopSpeaking();
+            SceneManager.LoadScene("MainScene");
+            yield break;
+        }
+
         public void OnClickSettings()
         {
-            if (_settingsPanel == null) return;
-            _settingsPanel.SetActive(!_settingsPanel.activeSelf);
+            StartCoroutine(SettingsRoutine());
         }
 
-        // Buka panel credits
+        private IEnumerator SettingsRoutine()
+        {
+            if (_settingsPanel != null) _settingsPanel.SetActive(!_settingsPanel.activeSelf);
+            yield break;
+        }
+
         public void OnClickCredits()
         {
-            _creditsPanel?.SetActive(true);
+            StartCoroutine(CreditsRoutine());
         }
 
-        // Tutup panel credits
+        private IEnumerator CreditsRoutine()
+        {
+            if (_creditsPanel != null) _creditsPanel.SetActive(true);
+            yield break;
+        }
+
+        // Mulai coroutine tutup credits
         public void OnClickCloseCredits()
         {
-            _creditsPanel?.SetActive(false);
+            StartCoroutine(CloseWithSound());
         }
 
-        // Keluar aplikasi langsung
+        // Tunggu audio selesai tutup
+        private IEnumerator CloseWithSound()
+        {
+            if (_audioSource != null && _audioSource.gameObject.activeInHierarchy && _audioSource.enabled)
+            {
+                _audioSource.PlayOneShot(_closeSound);
+                yield return new WaitUntil(() => !_audioSource.isPlaying);
+            }
+            if (_creditsPanel != null) _creditsPanel.SetActive(false);
+        }
+
         public void OnClickExit()
+        {
+            StartCoroutine(ExitRoutine());
+        }
+
+        private IEnumerator ExitRoutine()
         {
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
 #else
             Application.Quit();
 #endif
+            yield break;
         }
     }
 }

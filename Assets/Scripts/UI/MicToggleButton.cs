@@ -1,73 +1,67 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using AIRA.UI;
 using AIRA.Voice;
 
-public class MicToggleButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class MicToggleButton : CustomToggle, IPointerEnterHandler, IPointerExitHandler
 {
-    [SerializeField] private Image _buttonImage;
-
-    [Header("Sprite State")]
-    [SerializeField] private Sprite _spriteOffDefault;
-    [SerializeField] private Sprite _spriteOffHover;
-    [SerializeField] private Sprite _spriteOnDefault;
+    [Header("Hover Sprites")]
     [SerializeField] private Sprite _spriteOnHover;
+    [SerializeField] private Sprite _spriteOffHover;
 
-    private bool _isActive  = false;
-    private bool _isHovering = false;
+    private bool _isHovering;
+    private bool _currentState;
+    private Image _image;
 
-    // Subscribe event STTManager
+    // Daftar semua event listener
     private void OnEnable()
     {
-        STTManager.OnListeningStateChanged += SetActive;
+        if (_image == null) _image = GetComponent<Image>();
+        STTManager.OnListeningStateChanged += OnSTTListeningStateChanged;
+        OnValueChanged += OnToggleValueChanged;
     }
 
-    // Lepas event STTManager
+    // Hapus semua event listener
     private void OnDisable()
     {
-        STTManager.OnListeningStateChanged -= SetActive;
+        STTManager.OnListeningStateChanged -= OnSTTListeningStateChanged;
+        OnValueChanged -= OnToggleValueChanged;
     }
 
-    // Tombol ditekan user
-    public void OnClick()
+    // Sync state dari STTManager
+    private void OnSTTListeningStateChanged(bool isOn)
     {
-        _isActive = !_isActive;
-        UpdateVisual();
-
-        if (_isActive)
-            STTManager.Instance?.StartListening();
-        else
-            STTManager.Instance?.StopListening();
+        _currentState = isOn;
+        SetState(isOn);
     }
 
-    // Sync state dari luar
-    public void SetActive(bool active)
+    // Trigger STTManager saat toggle berubah
+    private void OnToggleValueChanged(bool isOn)
     {
-        _isActive = active;
-        UpdateVisual();
+        _currentState = isOn;
+        if (isOn) STTManager.Instance?.StartListening();
+        else STTManager.Instance?.StopListening();
     }
 
-    // Deteksi hover masuk
+    // Aktifkan hover state
     public void OnPointerEnter(PointerEventData eventData)
     {
         _isHovering = true;
-        UpdateVisual();
+        UpdateVisuals();
     }
 
-    // Deteksi hover keluar
+    // Nonaktifkan hover state
     public void OnPointerExit(PointerEventData eventData)
     {
         _isHovering = false;
-        UpdateVisual();
+        UpdateVisuals();
     }
 
-    // Terapkan sprite sesuai state
-    private void UpdateVisual()
+    // Update sprite saat hover
+    private void UpdateVisuals()
     {
-        if (_buttonImage == null) return;
-
-        _buttonImage.sprite = _isActive
-            ? (_isHovering ? _spriteOnHover  : _spriteOnDefault)
-            : (_isHovering ? _spriteOffHover : _spriteOffDefault);
+        if (_image == null || !_isHovering) return;
+        _image.sprite = _currentState ? _spriteOnHover : _spriteOffHover;
     }
 }

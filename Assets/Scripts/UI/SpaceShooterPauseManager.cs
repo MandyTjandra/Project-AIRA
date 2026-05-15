@@ -18,7 +18,6 @@ namespace AIRA.UI
         [Header("Stats Display")]
         [SerializeField] private TMP_Text _scoreValueText;
         [SerializeField] private TMP_Text _livesValueText;
-        [SerializeField] private string   _livesIcon = "♥";
 
         [Header("Aira Message")]
         [SerializeField] private TMP_Text _airaMessageText;
@@ -33,6 +32,12 @@ namespace AIRA.UI
 
         [Header("Scene")]
         [SerializeField] private string _mainSceneName = "MainScene";
+
+        [Header("Audio")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip   _resumeSound;
+        [SerializeField] private AudioClip   _restartSound;
+        [SerializeField] private AudioClip   _exitSound;
 
         private bool      _isPaused;
         private Coroutine _blurCoroutine;
@@ -78,7 +83,7 @@ namespace AIRA.UI
             if (_scoreValueText != null)
                 _scoreValueText.text = hasScore ? score.ToString() : "—";
             if (_livesValueText != null)
-                _livesValueText.text = hasScore ? $"{lives} {_livesIcon}" : "—";
+                _livesValueText.text = hasScore ? $"{lives}" : "—";
             if (_airaMessageText != null)
                 _airaMessageText.text = GetContextualMessage(score, lives);
 
@@ -101,14 +106,17 @@ namespace AIRA.UI
         // Tombol resume ditekan
         public void OnResumeClicked()
         {
-            ClosePause();
+            StartCoroutine(PlaySoundThen(_resumeSound, () => ClosePause()));
         }
 
         // Restart game via soft-reset
         public void OnRestartClicked()
         {
-            ClosePause();
-            GameEvents.Instance?.OnRetry();
+            StartCoroutine(PlaySoundThen(_restartSound, () =>
+            {
+                ClosePause();
+                GameEvents.Instance?.OnRetry();
+            }));
         }
 
         // Toggle panel settings
@@ -121,9 +129,23 @@ namespace AIRA.UI
         // Kembali ke Aira Room
         public void OnAiraRoomClicked()
         {
-            Time.timeScale = 1f;
-            TTSManager.Instance?.StopSpeaking();
-            SceneManager.LoadScene(_mainSceneName);
+            StartCoroutine(PlaySoundThen(_exitSound, () =>
+            {
+                GameManager.Instance?.EndSpaceShooter();
+            }));
+        }
+
+        // Mainkan audio lalu jalankan action
+        private IEnumerator PlaySoundThen(AudioClip clip, System.Action action)
+        {
+            if (clip != null && _audioSource != null
+                && _audioSource.gameObject.activeInHierarchy
+                && _audioSource.enabled)
+            {
+                _audioSource.PlayOneShot(clip);
+                yield return new WaitForSecondsRealtime(clip.length);
+            }
+            action?.Invoke();
         }
 
         // Pilih pesan kontekstual pause

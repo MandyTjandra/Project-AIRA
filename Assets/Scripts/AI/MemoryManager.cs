@@ -135,6 +135,7 @@ namespace AIRA.AI
         // Tambah pesan ke history
         public void AddMessage(string role, string content)
         {
+            content = TextUtils.StripEmoji(content);
             activeHistory.Add(new Message(role, content));
             TrimIfNeeded();
         }
@@ -145,7 +146,7 @@ namespace AIRA.AI
             var sb = new StringBuilder();
 
             string summary = string.IsNullOrEmpty(sessionSummary)
-                ? "(belum ada ringkasan)"
+                ? "(no summary yet)"
                 : sessionSummary;
 
             string prompt = systemPrompt.Replace("{session_summary}", summary);
@@ -240,34 +241,34 @@ namespace AIRA.AI
             if (!hasName && !hasLikes && !hasDislikes && !hasMoments)
                 return string.Empty;
 
-            var sb = new StringBuilder("[FAKTA TENTANG PEMAIN]");
+            var sb = new StringBuilder("[PLAYER FACTS]");
 
             if (hasName)
-                sb.AppendLine().Append($"- Nama: {Facts.playerName}");
+                sb.AppendLine().Append($"- Name: {Facts.playerName}");
 
             if (hasLikes)
-                sb.AppendLine().Append($"- Suka: {string.Join(", ", Facts.likes)}");
+                sb.AppendLine().Append($"- Likes: {string.Join(", ", Facts.likes)}");
 
             if (hasDislikes)
-                sb.AppendLine().Append($"- Tidak suka: {string.Join(", ", Facts.dislikes)}");
+                sb.AppendLine().Append($"- Dislikes: {string.Join(", ", Facts.dislikes)}");
 
             if (hasMoments)
             {
                 var recentMoments = Facts.sharedMoments.Count > 3
                     ? Facts.sharedMoments.GetRange(Facts.sharedMoments.Count - 3, 3)
                     : Facts.sharedMoments;
-                sb.AppendLine().Append($"- Momen bersama: {string.Join(", ", recentMoments)}");
+                sb.AppendLine().Append($"- Shared moments: {string.Join(", ", recentMoments)}");
             }
 
             // Tambah instruksi penggunaan fakta
             sb.AppendLine().AppendLine()
-              .AppendLine("CARA MENGGUNAKAN FAKTA INI:")
-              .AppendLine("- Gunakan fakta secara natural dan subtle, bukan dipaksakan")
-              .AppendLine("- Jangan sebut atau ungkit fakta ini di kalimat pembuka/greeting")
-              .AppendLine("- Hanya pakai fakta kalau topik percakapan memang relevan")
-              .AppendLine("- Biarkan player yang bawa topiknya duluan")
-              .AppendLine("- Jangan pernah bilang \"aku ingat kamu suka X\" secara eksplisit")
-              .Append    ("- Fakta ini untuk memahami player, bukan untuk diucapkan ulang");
+              .AppendLine("HOW TO USE THESE FACTS:")
+              .AppendLine("- Use facts naturally and subtly, not forcefully")
+              .AppendLine("- Do not mention or bring up facts in opening or greeting sentences")
+              .AppendLine("- Only use facts when the conversation topic is genuinely relevant")
+              .AppendLine("- Let the player bring up the topic first")
+              .AppendLine("- Never say \"I remember you like X\" explicitly")
+              .Append    ("- These facts are to understand the player, not to be repeated back");
 
             return sb.ToString();
         }

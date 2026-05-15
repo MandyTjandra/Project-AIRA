@@ -48,6 +48,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3136095145621368956, guid: afc804be0d034184f9470f9d3f9157f2, type: 3}
+      propertyPath: m_forcePower
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3136095145621368956, guid: afc804be0d034184f9470f9d3f9157f2, type: 3}
+      propertyPath: m_angularPower
+      value: 75
+      objectReference: {fileID: 0}
+    - target: {fileID: 4323637055205088556, guid: afc804be0d034184f9470f9d3f9157f2, type: 3}
+      propertyPath: m_IsTrigger
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6385347364433392593, guid: afc804be0d034184f9470f9d3f9157f2, type: 3}
       propertyPath: m_Name
       value: PF_Asteroid_Large_2 Variant

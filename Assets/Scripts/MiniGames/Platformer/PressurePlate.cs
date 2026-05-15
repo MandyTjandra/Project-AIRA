@@ -8,6 +8,9 @@ namespace AIRA.MiniGames.Platformer
         [SerializeField] private Sprite _spriteOff;
         [SerializeField] private Sprite _spriteOn;
 
+        [SerializeField] public string       effectDesc = "opens path";
+        [SerializeField] public PlateReactive affects;
+
         public UnityEvent OnPressed;
         public UnityEvent OnReleased;
 
@@ -18,10 +21,22 @@ namespace AIRA.MiniGames.Platformer
         private SpriteRenderer _renderer;
         private int _occupantCount;
 
-        // inisialisasi komponen renderer
+        // Inisialisasi komponen renderer
         private void Awake()
         {
             _renderer = GetComponent<SpriteRenderer>();
+        }
+
+        // Daftarkan ke registry
+        private void OnEnable()
+        {
+            InteractableRegistry.RegisterPlate(this);
+        }
+
+        // Hapus dari registry
+        private void OnDisable()
+        {
+            InteractableRegistry.UnregisterPlate(this);
         }
 
         // deteksi objek masuk

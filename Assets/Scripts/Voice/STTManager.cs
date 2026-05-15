@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using TMPro;
 using Whisper;
@@ -36,7 +37,6 @@ namespace AIRA.Voice
 
         [Header("STT Filter Settings")]
         [SerializeField] private float _minTokenConfidence = 0.4f;
-        [SerializeField] private float _minTextLength = 2;
 
         private static readonly string[] k_HallucinationBlacklist = {
             "[BLANK_AUDIO]", "[ Silence ]", "[ silence ]", "(silence)",
@@ -126,7 +126,10 @@ namespace AIRA.Voice
                     PauseListening();
                     break;
                 case GameManager.GameState.IDLE:
-                    ResumeListening();
+                    if (_isListening)
+                        ResumeListening();
+                    else
+                        StartListening();
                     break;
                 case GameManager.GameState.MINIGAME_PLATFORMER:
                 case GameManager.GameState.MINIGAME_SPACESHOOTER:
@@ -187,7 +190,8 @@ namespace AIRA.Voice
         {
             if (!_isListening || !_isPaused || !IsSTTEnabled()) return;
 
-            _isPaused = false;
+            _isPaused         = false;
+            _shouldTranscribe = true;
             OnListeningStateChanged?.Invoke(true);
 
             _micRecord.StartRecord();
@@ -262,16 +266,13 @@ namespace AIRA.Voice
                 return;
             }
 
-            // Layer 2: blacklist hallucination
-            string raw = result.Result ?? "";
-            foreach (var banned in k_HallucinationBlacklist)
+            // Layer 2: strip bracket tags lalu cek sisa teks
+            string raw      = result.Result ?? "";
+            string stripped = Regex.Replace(raw, @"^\s*\[[^\]]*\]\s*", "").Trim();
+            if (string.IsNullOrWhiteSpace(stripped))
             {
-                if (raw.Contains(banned))
-                {
-                    TriggerAiraReaction(ReactionType.DidntHear);
-                    RestartIfActive();
-                    return;
-                }
+                RestartIfActive();
+                return;
             }
 
             // Layer 3: token confidence
@@ -297,9 +298,12 @@ namespace AIRA.Voice
                 }
             }
 
-            // Layer 4: teks terlalu pendek
-            string cleaned = TextUtils.CleanSTTResult(raw);
-            if (string.IsNullOrWhiteSpace(cleaned) || cleaned.Length < _minTextLength)
+            // Layer 4: minimal satu kata bermakna
+            string cleaned  = TextUtils.CleanSTTResult(stripped);
+            int    wordCount = cleaned.Split(
+                new char[] { ' ', '\t' },
+                StringSplitOptions.RemoveEmptyEntries).Length;
+            if (string.IsNullOrWhiteSpace(cleaned) || wordCount < 1)
             {
                 RestartIfActive();
                 return;
@@ -357,6 +361,7 @@ namespace AIRA.Voice
         {
             yield return new WaitUntil(() =>
                 _whisperManager != null && _whisperManager.IsLoaded);
+            ApplyDeviceToMicRecord();
             IsInitialized = true;
             LoadingGate.Instance?.SetSTTReady();
             Debug.Log("[STTManager] Whisper siap.");

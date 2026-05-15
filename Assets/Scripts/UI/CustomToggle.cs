@@ -14,8 +14,11 @@ namespace AIRA.UI
         [SerializeField] private float _handleOnX = 20f;
         [SerializeField] private float _handleOffX = -20f;
 
-        // State awal saat scene load
         [SerializeField] private bool _initialState;
+
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip _soundOn;
+        [SerializeField] private AudioClip _soundOff;
 
         public event System.Action<bool> OnValueChanged;
 
@@ -23,7 +26,6 @@ namespace AIRA.UI
         private Button _button;
         private Image _targetImage;
 
-        // Inisialisasi dan terapkan visual awal
         private void Awake()
         {
             _button = GetComponent<Button>();
@@ -50,6 +52,13 @@ namespace AIRA.UI
         {
             _isOn = !_isOn;
             UpdateVisuals();
+
+            if (_audioSource != null)
+            {
+                _audioSource.clip = _isOn ? _soundOn : _soundOff;
+                _audioSource.Play();
+            }
+
             OnValueChanged?.Invoke(_isOn);
         }
 

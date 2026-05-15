@@ -39,6 +39,12 @@ namespace AIRA.UI
         [Header("Scene")]
         [SerializeField] private string _mainSceneName = "MainScene";
 
+        [Header("Audio")]
+        [SerializeField] private AudioSource _audioSource;
+        [SerializeField] private AudioClip   _resumeSound;
+        [SerializeField] private AudioClip   _restartSound;
+        [SerializeField] private AudioClip   _exitSound;
+
         private bool      _isPaused;
         private Coroutine _blurCoroutine;
 
@@ -106,14 +112,17 @@ namespace AIRA.UI
         // Tombol resume ditekan
         public void OnResumeClicked()
         {
-            ClosePause();
+            StartCoroutine(PlaySoundThen(_resumeSound, () => ClosePause()));
         }
 
         // Restart game dari awal
         public void OnRestartClicked()
         {
-            ClosePause();
-            HeadsUpGame.Instance?.StartGame();
+            StartCoroutine(PlaySoundThen(_restartSound, () =>
+            {
+                ClosePause();
+                HeadsUpGame.Instance?.StartGame();
+            }));
         }
 
         // Toggle panel settings
@@ -126,9 +135,28 @@ namespace AIRA.UI
         // Kembali ke Aira Room
         public void OnAiraRoomClicked()
         {
+            StopAllCoroutines();
+            _isPaused = false;
+            _pausePanel?.SetActive(false);
             Time.timeScale = 1f;
             TTSManager.Instance?.StopSpeaking();
+            HeadsUpGame.Instance?.EndGame();
+            GameManager.Instance?.ChangeState(GameManager.GameState.IDLE);
+            Destroy(gameObject);
             SceneManager.LoadScene(_mainSceneName);
+        }
+
+        // Mainkan audio lalu jalankan action
+        private IEnumerator PlaySoundThen(AudioClip clip, System.Action action)
+        {
+            if (clip != null && _audioSource != null
+                && _audioSource.gameObject.activeInHierarchy
+                && _audioSource.enabled)
+            {
+                _audioSource.PlayOneShot(clip);
+                yield return new WaitForSecondsRealtime(clip.length);
+            }
+            action?.Invoke();
         }
 
         // Mulai atau hentikan blur

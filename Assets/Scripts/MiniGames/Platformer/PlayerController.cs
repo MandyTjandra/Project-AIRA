@@ -17,8 +17,9 @@ namespace AIRA.MiniGames.Platformer
         [SerializeField] private LayerMask  _airaLayer;
 
         [Header("References")]
-        [SerializeField] private Animator   _animator;
-        [SerializeField] private SpriteRenderer _spriteRenderer;
+        [SerializeField] private Animator        _animator;
+        [SerializeField] private SpriteRenderer  _spriteRenderer;
+        [SerializeField] private PlatformerSFX   _sfx;
 
         // Properti akses luar
         public bool IsGrounded { get; private set; }
@@ -47,6 +48,9 @@ namespace AIRA.MiniGames.Platformer
 
                 if (Keyboard.current.spaceKey.wasPressedThisFrame && IsGrounded)
                     Jump();
+
+                if (IsGrounded && Mathf.Abs(_horizontalInput) > 0.01f)
+                    _sfx?.PlayStep();
             }
             else
             {
@@ -84,6 +88,7 @@ namespace AIRA.MiniGames.Platformer
         {
             _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, _jumpForce);
             _animator?.SetTrigger("doJump");
+            _sfx?.PlayJump();
         }
 
         // Flip sprite sesuai arah

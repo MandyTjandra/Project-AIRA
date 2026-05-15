@@ -147,6 +147,10 @@ public class GameManager : MonoBehaviour
             && previous != GameState.THINKING && previous != GameState.SPEAKING)
             _previousActiveState = previous;
 
+        // Bersihkan previous state saat kembali ke IDLE
+        if (newState == GameState.IDLE)
+            _previousActiveState = null;
+
         if (previous == GameState.THINKING)
             StopThinkingTimeout();
 
@@ -275,6 +279,8 @@ public class GameManager : MonoBehaviour
         if (string.IsNullOrEmpty(response))
             response = GetFallbackResponse("error");
 
+        response = TextUtils.StripEmoji(response);
+
         MemoryManager.Instance?.AddMessage("assistant", response);
 
         string expressionTag = AiraController.ExtractExpressionTag(response);
@@ -373,7 +379,10 @@ public class GameManager : MonoBehaviour
     // Kembali ke scene utama
     public void EndPlatformer()
     {
+        TTSManager.Instance?.StopSpeaking();
+        STTManager.Instance?.StopListening();
         _previousActiveState = null;
+        Time.timeScale = 1f;
         ChangeState(GameState.IDLE);
         SceneManager.LoadScene("MainScene");
     }
@@ -389,8 +398,9 @@ public class GameManager : MonoBehaviour
     // Kembali dari SpaceShooter
     public void EndSpaceShooter()
     {
-        _previousActiveState = null;
         TTSManager.Instance?.StopSpeaking();
+        STTManager.Instance?.StopListening();
+        _previousActiveState = null;
         Time.timeScale = 1f;
         ChangeState(GameState.IDLE);
         SceneManager.LoadScene("MainScene");

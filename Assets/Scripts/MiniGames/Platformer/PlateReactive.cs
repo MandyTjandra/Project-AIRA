@@ -10,6 +10,8 @@ namespace AIRA.MiniGames.Platformer
         [SerializeField] private Vector2 _offsetOn;
         [SerializeField] private float _moveSpeed = 5f;
 
+        [SerializeField] public string blockDesc = "blocks path";
+
         // Daftar plate yang dipantau
         [SerializeField] private List<PressurePlate> _linkedPlates = new();
 
@@ -19,6 +21,10 @@ namespace AIRA.MiniGames.Platformer
         // Hitung jumlah plate aktif
         private int _activePlateCount;
 
+        // Cek apakah object sedang blocking
+        public bool IsBlocking =>
+            Vector2.Distance(transform.position, _startPosition + _offsetOff) < 0.1f;
+
         // Simpan posisi awal objek
         private void Awake()
         {
@@ -26,9 +32,10 @@ namespace AIRA.MiniGames.Platformer
             _currentOffset  = _offsetOff;
         }
 
-        // Subscribe semua plate
+        // Subscribe plate dan daftarkan ke registry
         private void OnEnable()
         {
+            InteractableRegistry.RegisterReactive(this);
             foreach (var plate in _linkedPlates)
             {
                 if (plate == null) continue;
@@ -37,9 +44,10 @@ namespace AIRA.MiniGames.Platformer
             }
         }
 
-        // Unsubscribe semua plate
+        // Unsubscribe plate dan hapus dari registry
         private void OnDisable()
         {
+            InteractableRegistry.UnregisterReactive(this);
             foreach (var plate in _linkedPlates)
             {
                 if (plate == null) continue;

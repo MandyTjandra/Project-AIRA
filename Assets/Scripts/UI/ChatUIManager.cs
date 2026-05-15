@@ -33,6 +33,13 @@ public class ChatUIManager : MonoBehaviour
     [Header("Minigame Buttons")]
     [SerializeField] private GameObject[] _minigameButtons;
 
+    [Header("Input Settings")]
+    [SerializeField] private int _maxInputLength = 200;
+
+    [Header("Audio")]
+    [SerializeField] private AudioSource _audioSource;
+    [SerializeField] private AudioClip   _sendSound;
+
     // Private State
     private Coroutine _errorRecoveryCoroutine;
 
@@ -47,7 +54,10 @@ public class ChatUIManager : MonoBehaviour
         _cancelButton?.onClick.AddListener(OnCancel);
 
         if (_inputField != null)
+        {
+            _inputField.characterLimit = _maxInputLength;
             _inputField.onSubmit.AddListener(OnInputFieldSubmit);
+        }
 
         ShowCancelButton(false);
     }
@@ -77,6 +87,9 @@ public class ChatUIManager : MonoBehaviour
 
         string text = _inputField.text.Trim();
         if (string.IsNullOrEmpty(text)) return;
+
+        if (_audioSource != null && _sendSound != null)
+            _audioSource.PlayOneShot(_sendSound);
 
         _inputField.text = "";
         DisplayMessage("user", text);

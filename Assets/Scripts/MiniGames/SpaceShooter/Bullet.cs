@@ -39,8 +39,12 @@ public class Bullet : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Hindari tabrakan dengan Player atau sesama peluru
-        if (collision.CompareTag("Player") || collision.CompareTag("Bullet")) return;
+        // Hindari friendly fire dan sesama peluru
+        if (collision.CompareTag("Bullet")) return;
+        if (Owner == BulletOwner.Player    && collision.CompareTag("Player"))    return;
+        if (Owner == BulletOwner.Player    && collision.CompareTag("Companion")) return;
+        if (Owner == BulletOwner.Companion && collision.CompareTag("Companion")) return;
+        if (Owner == BulletOwner.Companion && collision.CompareTag("Player"))    return;
 
         if (m_hitVFXPrefab != null)
         {

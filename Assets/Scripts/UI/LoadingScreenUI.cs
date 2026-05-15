@@ -15,6 +15,10 @@ public class LoadingScreenUI : MonoBehaviour
     [SerializeField] private float _fadeDuration    = 1f;
     [SerializeField] private float _sliderSmoothing = 3f;
 
+    [Header("Background")]
+    [SerializeField] private Image  _backgroundImage;
+    [SerializeField] private Sprite _backgroundSprite;
+
     [Header("Hint Rotation")]
     [SerializeField] private TMP_Text _hintText;
     [SerializeField] private float    _hintInterval     = 4f;
@@ -38,12 +42,29 @@ public class LoadingScreenUI : MonoBehaviour
         if (_progressSlider != null) _progressSlider.value = 0f;
         if (_canvasGroup    != null) _canvasGroup.alpha    = 1f;
 
+        if (_backgroundSprite != null && _backgroundImage != null)
+            _backgroundImage.sprite = _backgroundSprite;
+
         if (_hintText != null && _hints != null && _hints.Length > 0)
         {
             _hintText.text  = _hints[0];
             _hintText.alpha = 1f;
             StartCoroutine(HintRotationCoroutine());
         }
+    }
+
+    // Set background dari luar
+    public void SetBackground(Sprite sprite)
+    {
+        if (_backgroundImage != null && sprite != null)
+            _backgroundImage.sprite = sprite;
+    }
+
+    // Set hints dari luar per scene
+    public void SetHints(string[] hints)
+    {
+        if (hints != null && hints.Length > 0)
+            _hints = hints;
     }
 
     // Smooth slider dan persentase teks

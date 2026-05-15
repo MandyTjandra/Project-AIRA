@@ -15,6 +15,8 @@ namespace AIRA.MiniGames.SpaceShooter
         [SerializeField] private int m_maxLives = 3;
         [SerializeField] private int m_currentLives;
 
+        private bool m_isGameOver;
+
         // Inisialisasi singleton dan nyawa
         private void Awake()
         {
@@ -52,11 +54,13 @@ namespace AIRA.MiniGames.SpaceShooter
         // Kurangi nyawa saat mati
         public void LoseLife()
         {
+            if (m_isGameOver || m_currentLives <= 0) return;
             m_currentLives--;
-            Debug.Log($"Nyawa Tersisa: {m_currentLives} / {m_maxLives}");
+            Debug.Log($"[LIVES] Nyawa Tersisa: {m_currentLives} / {m_maxLives}");
             if (m_currentLives <= 0)
             {
                 m_currentLives = 0;
+                m_isGameOver   = true;
                 GameOver();
             }
         }
@@ -66,8 +70,8 @@ namespace AIRA.MiniGames.SpaceShooter
         {
             Time.timeScale = 1f;
             m_currentLives = m_maxLives;
+            m_isGameOver   = false;
             ClearScore();
-            Debug.Log("ScoreManager: Game direset.");
         }
 
         // Trigger game over
@@ -75,13 +79,12 @@ namespace AIRA.MiniGames.SpaceShooter
         {
             Debug.Log("GAME OVER!");
             GameEvents.Instance.TriggerGameOver();
-            Invoke("FreezeGame", 0.5f);
+            Invoke(nameof(FreezeGame), 0.5f);
         }
 
-        // Bekukan waktu game
+        // Bekukan waktu tanpa cek GameManager
         private void FreezeGame()
         {
-            if (GameManager.Instance?.CurrentState != GameManager.GameState.MINIGAME_SPACESHOOTER) return;
             Time.timeScale = 0f;
         }
 

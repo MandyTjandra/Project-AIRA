@@ -37,6 +37,11 @@ public class PauseMenuManager : MonoBehaviour
     [Header("Scene")]
     [SerializeField] private string _mainMenuSceneName = "MainMenu";
 
+    [Header("Audio")]
+    [SerializeField] private AudioSource _audioSource;
+    [SerializeField] private AudioClip   _resumeSound;
+    [SerializeField] private AudioClip   _exitSound;
+
     private bool      _isPaused;
     private Coroutine _blurCoroutine;
 
@@ -56,6 +61,18 @@ public class PauseMenuManager : MonoBehaviour
     // Deteksi tombol ESC
     private void Update()
     {
+        if (_isPaused && (_pausePanel == null || !_pausePanel.activeSelf))
+        {
+            _isPaused = false;
+            Time.timeScale = 1f;
+        }
+
+        var currentState = GameManager.Instance?.CurrentState;
+        if (currentState == GameManager.GameState.MINIGAME_PLAYING ||
+            currentState == GameManager.GameState.MINIGAME_INTRO  ||
+            currentState == GameManager.GameState.MINIGAME_RESULT)
+            return;
+
         if (Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
         if (IsMinigameActive()) return;
 
@@ -113,13 +130,18 @@ public class PauseMenuManager : MonoBehaviour
             _pausePanel.SetActive(false);
 
         StartBlur(false);
-        Time.timeScale = 1f;
+
+        // Jangan restore timeScale kalau tutorial masih aktif
+        bool tutorialStillOpen = TutorialPanel.Instance != null
+            && TutorialPanel.Instance.IsTutorialOpen;
+        if (!tutorialStillOpen)
+            Time.timeScale = 1f;
     }
 
     // Tombol resume ditekan
     public void OnResumeClicked()
     {
-        ClosePause();
+        StartCoroutine(PlaySoundThen(_resumeSound, () => ClosePause()));
     }
 
     // Toggle panel settings
@@ -132,9 +154,25 @@ public class PauseMenuManager : MonoBehaviour
     // Kembali ke main menu
     public void OnMainMenuClicked()
     {
-        Time.timeScale = 1f;
-        TTSManager.Instance?.StopSpeaking();
-        SceneManager.LoadScene(_mainMenuSceneName);
+        StartCoroutine(PlaySoundThen(_exitSound, () =>
+        {
+            Time.timeScale = 1f;
+            TTSManager.Instance?.StopSpeaking();
+            SceneManager.LoadScene(_mainMenuSceneName);
+        }));
+    }
+
+    // Mainkan audio lalu jalankan action
+    private IEnumerator PlaySoundThen(AudioClip clip, System.Action action)
+    {
+        if (clip != null && _audioSource != null
+            && _audioSource.gameObject.activeInHierarchy
+            && _audioSource.enabled)
+        {
+            _audioSource.PlayOneShot(clip);
+            yield return new WaitForSecondsRealtime(clip.length);
+        }
+        action?.Invoke();
     }
 
     // Mulai atau hentikan blur

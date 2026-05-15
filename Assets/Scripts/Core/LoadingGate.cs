@@ -66,7 +66,7 @@ public class LoadingGate : MonoBehaviour
     public void SetLLMReady()
     {
         _llmReady = true;
-        _loadingScreenUI?.SetProgress(0.6f, "Model bahasa siap...");
+        _loadingScreenUI?.SetProgress(0.6f, "Language model ready...");
         CheckAllReady();
     }
 
@@ -74,7 +74,7 @@ public class LoadingGate : MonoBehaviour
     public void SetTTSReady()
     {
         _ttsReady = true;
-        _loadingScreenUI?.SetProgress(0.8f, "Text-to-Speech siap...");
+        _loadingScreenUI?.SetProgress(0.8f, "Text-to-Speech ready...");
         CheckAllReady();
     }
 
@@ -82,7 +82,7 @@ public class LoadingGate : MonoBehaviour
     public void SetSTTReady()
     {
         _sttReady = true;
-        _loadingScreenUI?.SetProgress(0.95f, "Speech Recognition siap...");
+        _loadingScreenUI?.SetProgress(0.95f, "Speech recognition ready...");
         CheckAllReady();
     }
 
@@ -95,7 +95,7 @@ public class LoadingGate : MonoBehaviour
         if (!IsReady) return;
 
         // Unlock input semua sistem ready
-        _loadingScreenUI?.SetProgress(1f, "Selamat datang!");
+        _loadingScreenUI?.SetProgress(1f, "Welcome!");
         _chatUIManager?.SetInputLocked(false);
         if (_playButton != null) _playButton.interactable = true;
         Debug.Log("[LoadingGate] Semua model ready.");
@@ -109,7 +109,7 @@ public class LoadingGate : MonoBehaviour
         {
             // Force unlock meskipun belum semua ready
             Debug.LogWarning("[LoadingGate] Timeout — force unlock input.");
-            _loadingScreenUI?.SetProgress(1f, "Siap (timeout)...");
+            _loadingScreenUI?.SetProgress(1f, "Ready (timeout)...");
             _chatUIManager?.SetInputLocked(false);
             if (_playButton != null) _playButton.interactable = true;
         }
