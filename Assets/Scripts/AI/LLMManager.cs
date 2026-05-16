@@ -32,6 +32,7 @@ namespace AIRA.AI
         private CancellationTokenSource _cts;
         private bool _isReady;
         private bool _isExtracting;
+        private bool _isCancelled;
         private FactExtractor _factExtractor;
 
         // Instruksi emosi untuk system prompt
@@ -88,6 +89,7 @@ namespace AIRA.AI
             CancellationToken externalToken = default)
         {
             CancelCurrent();
+            _isCancelled = false;
 
             float timeoutSeconds = Settings?.llm_timeout_seconds ?? 15f;
             _cts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
@@ -96,6 +98,11 @@ namespace AIRA.AI
             try
             {
                 string response = await SendMessageInternal(fullContext, _cts.Token);
+                if (_isCancelled)
+                {
+                    _isCancelled = false;
+                    return string.Empty;
+                }
                 OnResponseReceived?.Invoke(response);
                 _ = TriggerExtraction();
                 return response;
@@ -111,6 +118,7 @@ namespace AIRA.AI
         public void CancelCurrent()
         {
             if (_cts == null) return;
+            _isCancelled = true;
             _cts.Cancel();
             _cts.Dispose();
             _cts = null;

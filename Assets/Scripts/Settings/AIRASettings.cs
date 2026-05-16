@@ -162,6 +162,7 @@ namespace AIRA.Core
         public void SetTTSEnabled(bool value)
         {
             _ttsEnabled = value;
+            if (!value) TTSManager.Instance?.StopSpeaking();
             SaveSettings();
         }
 

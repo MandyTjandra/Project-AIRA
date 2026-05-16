@@ -148,6 +148,7 @@ public class AiraController : MonoBehaviour
     private bool      _tier2Triggered = false;
     private bool      _tier3Triggered = false;
     private bool      _idleTimerRunning = false;
+    private bool      _idleCommentPending = false;
 
     // Unity Lifecycle
     private void Awake()
@@ -285,6 +286,9 @@ public class AiraController : MonoBehaviour
     // Inject idle prompt ke LLM
     private void TriggerIdleComment(int tier)
     {
+        if (_idleCommentPending) return;
+        _idleCommentPending = true;
+
         string[] pool = tier switch
         {
             1 => _tier1Prompts,
@@ -296,6 +300,8 @@ public class AiraController : MonoBehaviour
         string template = pool[Random.Range(0, pool.Length)];
         string prompt   = template.Replace("{0}", Mathf.RoundToInt(_idleTimer).ToString());
         GameManager.Instance?.ProcessUserInput(prompt);
+
+        _idleCommentPending = false;
     }
 
     // Expression Implementation

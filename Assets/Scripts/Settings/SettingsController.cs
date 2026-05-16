@@ -41,6 +41,13 @@ namespace AIRA.UI
 
         protected virtual void OnEnable()
         {
+            StartCoroutine(InitWithDelay());
+        }
+
+        // Delay satu frame sebelum init
+        private IEnumerator InitWithDelay()
+        {
+            yield return null;
             LoadCurrentSettings();
             RegisterSemuaCallback();
 
@@ -79,9 +86,9 @@ namespace AIRA.UI
             _sfxValue.text      = Mathf.RoundToInt(sfx).ToString();
             _ttsVoiceValue.text = Mathf.RoundToInt(tts).ToString();
 
-            _sttToggle.SetState(AIRASettings.Instance.STTEnabled);
-            _ttsToggle.SetState(AIRASettings.Instance.TTSEnabled);
-            _emotionToggle.SetState(AIRASettings.Instance.UseEmotionClassifier);
+            _sttToggle?.SetState(AIRASettings.Instance.STTEnabled);
+            _ttsToggle?.SetState(AIRASettings.Instance.TTSEnabled);
+            _emotionToggle?.SetState(AIRASettings.Instance.UseEmotionClassifier);
 
             _isLoading = false;
         }

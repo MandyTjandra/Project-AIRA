@@ -126,10 +126,8 @@ namespace AIRA.Voice
                     PauseListening();
                     break;
                 case GameManager.GameState.IDLE:
-                    if (_isListening)
+                    if (_isListening && _isPaused)
                         ResumeListening();
-                    else
-                        StartListening();
                     break;
                 case GameManager.GameState.MINIGAME_PLATFORMER:
                 case GameManager.GameState.MINIGAME_SPACESHOOTER:
@@ -349,10 +347,28 @@ namespace AIRA.Voice
         // Restart rekaman jika masih aktif
         private void RestartIfActive()
         {
+            if (!IsSTTEnabled()) { _shouldTranscribe = false; return; }
             if (_isListening && !_isPaused)
             {
                 _shouldTranscribe = true;
-                _micRecord.StartRecord();
+                StartCoroutine(DelayedRestart());
+            }
+        }
+
+        // Beri waktu mic device settle sebelum rekam ulang
+        private IEnumerator DelayedRestart()
+        {
+            yield return new WaitForSeconds(0.2f);
+            if (_isListening && !_isPaused && _micRecord != null)
+            {
+                try
+                {
+                    _micRecord.StartRecord();
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"[STTManager] RestartIfActive gagal: {e.Message}");
+                }
             }
         }
 
@@ -404,14 +420,14 @@ namespace AIRA.Voice
         {
             if (string.IsNullOrWhiteSpace(text)) return;
 
-            if (ChatUIManager.Instance != null)
-            {
-                if (_inputField != null)
-                    _inputField.text = text;
-                ChatUIManager.Instance.OnUserSubmit();
-                return;
-            }
+            // Tampilkan di chat
+            ChatUIManager.Instance?.DisplayMessage("user", text);
 
+            // Clear input field
+            if (_inputField != null) _inputField.text = string.Empty;
+
+            // Kirim ke GameManager langsung, bypass OnUserSubmit
+            // supaya tidak double-trigger
             GameManager.Instance?.ProcessUserInput(text);
         }
 

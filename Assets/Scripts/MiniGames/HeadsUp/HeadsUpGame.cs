@@ -50,6 +50,7 @@ public class HeadsUpGame : MiniGameBase
     // Update timer saat bermain
     private void Update()
     {
+        if (_playFlow == null) return;
         if (_playFlow.IsActive)
             _playFlow.UpdateTimer();
     }
@@ -64,6 +65,7 @@ public class HeadsUpGame : MiniGameBase
     // Entry point dari GameManager
     public override void ProcessUserResponse(string input)
     {
+        if (_introFlow == null || _playFlow == null) return;
         if (_introFlow.IsActive)
             _introFlow.ProcessInput(input);
         else if (_playFlow.IsActive)

@@ -5,6 +5,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using TMPro;
+using AIRA.Character;
 using AIRA.Voice;
 
 namespace AIRA.UI
@@ -154,12 +155,24 @@ public class PauseMenuManager : MonoBehaviour
     // Kembali ke main menu
     public void OnMainMenuClicked()
     {
-        StartCoroutine(PlaySoundThen(_exitSound, () =>
-        {
-            Time.timeScale = 1f;
-            TTSManager.Instance?.StopSpeaking();
-            SceneManager.LoadScene(_mainMenuSceneName);
-        }));
+        StartCoroutine(ExitToMainMenuRoutine());
+    }
+
+    // Ucap selamat tinggal lalu exit
+    private IEnumerator ExitToMainMenuRoutine()
+    {
+        // Restore timeScale dulu agar WaitForSeconds di PlayChunk tidak hang
+        Time.timeScale = 1f;
+        if (_pausePanel != null) _pausePanel.SetActive(false);
+
+        TTSManager.Instance?.StopSpeaking();
+        AiraController.Instance?.SetExpression("[SAD]");
+        TTSManager.Instance?.Speak(
+            "Are you sure you want to leave? I'll be waiting for you here!",
+            "SAD");
+        yield return new WaitUntil(() =>
+            TTSManager.Instance == null || !TTSManager.Instance.IsSpeaking);
+        SceneManager.LoadScene(_mainMenuSceneName);
     }
 
     // Mainkan audio lalu jalankan action

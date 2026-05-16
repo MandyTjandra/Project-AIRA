@@ -57,6 +57,7 @@ public class ChatUIManager : MonoBehaviour
         {
             _inputField.characterLimit = _maxInputLength;
             _inputField.onSubmit.AddListener(OnInputFieldSubmit);
+            _inputField.onEndEdit.RemoveAllListeners();
         }
 
         ShowCancelButton(false);
@@ -218,6 +219,11 @@ public class ChatUIManager : MonoBehaviour
                 SetInputLocked(false);
                 ShowCancelButton(false);
                 SetMinigameButtonsVisible(true);
+                if (_inputField != null)
+                {
+                    _inputField.ActivateInputField();
+                    _inputField.Select();
+                }
                 break;
 
             case GameManager.GameState.THINKING:

@@ -96,6 +96,8 @@ namespace AIRA.Voice
 
             if (exeExists && modelExists)
                 StartCoroutine(WarmUpAndReady());
+            else
+                Debug.LogWarning("[TTSManager] Piper tidak ditemukan.");
         }
 
         // Generate WAV dummy lalu report ready
@@ -137,13 +139,21 @@ namespace AIRA.Voice
         // Hentikan saat state berubah
         private void HandleStateChanged(GameManager.GameState prev, GameManager.GameState next)
         {
-            if (next != GameManager.GameState.SPEAKING && IsSpeaking)
+            // IDLE/LISTENING: TTS sudah selesai sendiri (_isSpeaking=false) sebelum state berubah
+            // Jangan stop — cukup state THINKING dan lainnya yang memang interrupt TTS
+            if (next == GameManager.GameState.IDLE
+                || next == GameManager.GameState.LISTENING
+                || next == GameManager.GameState.SPEAKING)
+                return;
+
+            if (IsSpeaking)
                 StopSpeaking();
         }
 
         // Tambah ke queue TTS
         public void EnqueueSpeak(string text, string expression = "NEUTRAL")
         {
+            if (AIRASettings.Instance != null && !AIRASettings.Instance.TTSEnabled) return;
             if (string.IsNullOrWhiteSpace(text)) return;
             OnSpeakText?.Invoke(TextUtils.StripExpressionTags(text));
             _speakQueue.Enqueue((text, expression));
@@ -180,6 +190,11 @@ namespace AIRA.Voice
         // Terima teks dan ekspresi aktif
         public void Speak(string text, string expression = "NEUTRAL")
         {
+            if (AIRASettings.Instance != null && !AIRASettings.Instance.TTSEnabled)
+            {
+                Debug.LogWarning("[TTSManager] Speak() diblok — TTSEnabled=false di AIRASettings.");
+                return;
+            }
             if (string.IsNullOrWhiteSpace(text)) return;
             OnSpeakText?.Invoke(TextUtils.StripExpressionTags(text));
 
@@ -382,11 +397,6 @@ namespace AIRA.Voice
             string outputPath,
             System.Threading.Tasks.TaskCompletionSource<bool> tcs)
         {
-            string debugPath = Path.Combine(
-                System.Environment.GetFolderPath(
-                    System.Environment.SpecialFolder.UserProfile),
-                "Downloads", "piper_debug.txt");
-
             System.Diagnostics.Process process = null;
 
             try
@@ -406,10 +416,7 @@ namespace AIRA.Voice
             }
             catch (System.Exception e)
             {
-                File.AppendAllText(debugPath,
-                    $"[{System.DateTime.Now}] EXCEPTION (start): {e.Message}\n" +
-                    $"exe: {_resolvedPiperExe}\n" +
-                    $"model: {_resolvedModelPath}\n---\n");
+                Debug.LogError($"[TTSManager] Gagal start Piper: {e.Message}\nexe: {_resolvedPiperExe}");
                 tcs.SetException(e);
                 yield break;
             }
@@ -420,29 +427,17 @@ namespace AIRA.Voice
 
             try
             {
-                string stderr   = process.StandardError.ReadToEnd();
-                string stdout   = process.StandardOutput.ReadToEnd();
                 int    exitCode = process.ExitCode;
+                string stderr   = process.StandardError.ReadToEnd();
 
-                string content =
-                    $"[{System.DateTime.Now}]\n" +
-                    $"exe: {_resolvedPiperExe}\n" +
-                    $"model: {_resolvedModelPath}\n" +
-                    $"workdir: {Path.GetDirectoryName(_resolvedPiperExe)}\n" +
-                    $"output: {outputPath}\n" +
-                    $"stderr: {stderr}\n" +
-                    $"stdout: {stdout}\n" +
-                    $"exitcode: {exitCode}\n---\n";
+                if (exitCode != 0)
+                    Debug.LogWarning($"[TTSManager] Piper exitCode={exitCode}: {stderr}");
 
-                File.AppendAllText(debugPath, content);
                 tcs.SetResult(true);
             }
             catch (System.Exception e)
             {
-                File.AppendAllText(debugPath,
-                    $"[{System.DateTime.Now}] EXCEPTION (read): {e.Message}\n" +
-                    $"exe: {_resolvedPiperExe}\n" +
-                    $"model: {_resolvedModelPath}\n---\n");
+                Debug.LogError($"[TTSManager] Error baca output Piper: {e.Message}");
                 tcs.SetException(e);
             }
         }
