@@ -115,21 +115,6 @@ This feature can be disabled via `AIRASettings > Use Emotion Classifier` in the 
 2. Open `SampleScene.unity`
 3. Press **Play** and start chatting with AIRA
 
-## Image Folder Structure
-
-Place your screenshots inside the `images/` folder at the root of the repository:
-
-```
-Project-AIRA/
-├── images/
-│   ├── main_screen.png        # Main app window / AIRA character
-│   ├── free_chat.png          # Free chat UI in action
-│   ├── mini_games.png         # Mini-game gameplay screenshot
-│   └── inspector_setup.png    # Unity Inspector setup reference
-├── Assets/
-└── ...
-```
-
 ## Credits
 
 - **Character:** Hiyori Momose © Live2D Inc.
